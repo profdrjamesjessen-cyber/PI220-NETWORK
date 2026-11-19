@@ -1,0 +1,32 @@
+{
+    "id": "./",
+    "name": "PI220 — APP-005 NETWORK",
+    "short_name": "PI220 NETWORK",
+    "description": "Parallel Industries 220 — Network Management and Monitoring System.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#07111f",
+    "theme_color": "#0b1728",
+    "categories": [
+      "business",
+      "productivity",
+      "utilities"
+    ],
+    "lang": "en",
+    "icons": [
+      {
+        "src": "./assets/icon-192.svg",
+        "sizes": "192x192",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      },
+      {
+        "src": "./assets/icon-512.svg",
+        "sizes": "512x512",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      }
+    ]
+  }

@@ -1,0 +1,132 @@
+# PI220 — PRODUCTION NOTE
+## GOOGLE ANALYTICS 4 & GOOGLE TAG MANAGER
+**Review date:** 19 November 2026  
+**Next review:** 20 November 2026  
+**Status:** Integration in progress — publication pending
+
+**Parallel Industries 220**
+
+### 1. CONFIRMED CONFIGURATION
+
+**Public website:**  
+https://profdrjamesjessen-cyber.github.io/
+
+**Google Analytics 4**
+- Measurement ID: `G-S1S7HJCFWV`
+- Existing integration: `js/consent-manager.js`
+- Existing consent mechanism: PI220 visitor acceptance/rejection.
+
+**Google Tag Manager**
+- Account: Parallel Industries 220
+- Account ID: `6406485029`
+- Container ID: `GTM-TJQ5N8S6`
+- Container ID reference: `287779083`
+- Platform: Web
+
+### 2. COMPLETED AND VERIFIED
+
+- GA4 JavaScript request returned HTTP 200.
+- GTM JavaScript request returned HTTP 200.
+- GTM snippet integrated into the public website's `index.html`.
+- GTM container created successfully.
+- GA4 Measurement ID identified and entered into GTM.
+- Google Analytics tag created.
+- GA4 Event tag created.
+- Custom Event trigger created:
+  `PI220 — Analytics Consent Granted`
+- Custom event name configured:
+  `pi220:consentchange`
+
+### 3. PENDING WORKSPACE CHANGES
+
+Five additions were visible in the GTM workspace:
+
+1. Google Analytics tag.
+2. Google Analytics GA4 Event tag.
+3. PI220 Analytics Consent Granted trigger.
+4. Automatic event detection setting.
+5. Allow user-provided data capabilities setting.
+
+These are workspace changes, not confirmation of a published container.
+
+### 4. TECHNICAL ISSUES REQUIRING REVIEW
+
+**A. Consent event integration**
+
+The current `consent-manager.js` dispatches:
+
+`window.dispatchEvent(new CustomEvent("pi220:consentchange"))`
+
+GTM Custom Event triggers listen to events pushed into `window.dataLayer`.
+
+Required: implement and verify a consent-aware dataLayer integration carrying the analytics acceptance state.
+
+**B. Google tag firing trigger**
+
+The Google tag currently shows:
+
+- Measurement ID: `G-S1S7HJCFWV`
+- Trigger: `Initialization - All Pages`
+- Ignore duplicate instances of on-page configuration: enabled.
+
+The initialization trigger must be reviewed and replaced with a consent-controlled strategy before publication.
+
+**C. Duplicate GA4 tracking**
+
+The existing consent manager directly loads GA4 and sends `page_view` events.
+
+The new GTM configuration could introduce duplicate tracking.
+
+Required: decide whether to retain direct GA4 integration or migrate GA4 delivery to GTM. Do not operate both paths simultaneously without a deliberate deduplication strategy.
+
+**D. Consent Mode**
+
+Verify that:
+- Analytics remains denied before acceptance.
+- Acceptance grants analytics consent.
+- Rejection keeps analytics denied.
+- Withdrawal updates consent correctly.
+- GTM cannot bypass PI220's consent mechanism.
+
+**E. Event configuration**
+
+The GA4 Event tag and its custom trigger require review. Confirm the intended event name, firing conditions and whether any additional page-view events are necessary.
+
+### 5. TOMORROW'S PRODUCTION CHECKLIST
+
+- [ ] Inspect Google tag configuration.
+- [ ] Inspect GA4 Event tag configuration.
+- [ ] Correct the Google tag firing trigger.
+- [ ] Implement the dataLayer consent event.
+- [ ] Verify acceptance and rejection behavior.
+- [ ] Resolve duplicate GA4 tracking risk.
+- [ ] Test using GTM Preview / Tag Assistant.
+- [ ] Verify GA4 Realtime reporting.
+- [ ] Verify page views and event counts.
+- [ ] Review final workspace changes.
+- [ ] Publish only after successful testing.
+
+### 6. PRODUCTION SAFETY DIRECTIVES
+
+- Preserve the existing PI220 public website functionality.
+- Do not modify APP-005.
+- Do not remove the existing consent manager.
+- Do not publish the GTM container before verification.
+- Do not introduce duplicate GA4 installations.
+- Preserve the current working website deployment.
+
+**FINAL STATUS**
+
+GTM installation confirmed at HTTP 200. GA4 library loading confirmed at HTTP 200. End-to-end analytics collection and consent-controlled GTM integration remain pending verification.
+
+**Next operation: 20 November 2026 — PI220 GA4 / GTM Integration Review.**
+
+---
+
+**Prof D.Sc Jesse Jessen**  
+Director • Owner • Master • Parallel Industries 220
+
+**Prof Dr Sentient**  
+AI Architect • General Chief Advisor & Assistant
+
+*Mission • Unity • Future • Unstoppable.*

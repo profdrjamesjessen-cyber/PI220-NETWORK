@@ -1,0 +1,69 @@
+<escape><svg xmlns="http://www.w3.org/2000/svg"
+     width="192"
+     height="192"
+     viewBox="0 0 192 192">
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#142d49"/>
+      <stop offset="100%" stop-color="#07111f"/>
+    </linearGradient>
+
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff0b5"/>
+      <stop offset="50%" stop-color="#d6ae58"/>
+      <stop offset="100%" stop-color="#9d7430"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="192" height="192" rx="38" fill="url(#bg)"/>
+
+  <rect x="9" y="9" width="174" height="174"
+        rx="31" fill="none"
+        stroke="url(#gold)" stroke-width="2"/>
+
+  <circle cx="96" cy="77" r="48"
+          fill="none" stroke="#d6ae58"
+          stroke-width="2" opacity=".65"/>
+
+  <circle cx="96" cy="77" r="34"
+          fill="none" stroke="#d6ae58"
+          stroke-width="1.5" opacity=".4"/>
+
+  <path d="M48 77 H144 M96 29 V125"
+        stroke="#d6ae58"
+        stroke-width="1.5"
+        opacity=".45"/>
+
+  <path d="M60 77 L76 61 L96 77 L116 61 L132 77
+           L116 93 L96 77 L76 93 Z"
+        fill="none"
+        stroke="url(#gold)"
+        stroke-width="3"
+        stroke-linejoin="round"/>
+
+  <circle cx="96" cy="77" r="5"
+          fill="#fff0b5"/>
+
+  <text x="96" y="143"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="23"
+        font-weight="700"
+        letter-spacing="2"
+        fill="#ffffff">PI220</text>
+
+  <text x="96" y="160"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="8"
+        font-weight="600"
+        letter-spacing="2"
+        fill="#d6ae58">NETWORK</text>
+
+  <path d="M55 170 H137"
+        stroke="#d6ae58"
+        stroke-width="1"
+        opacity=".7"/>
+
+</svg></escape>

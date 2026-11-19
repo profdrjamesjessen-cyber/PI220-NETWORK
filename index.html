@@ -1,0 +1,1256 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>APP-005 NETWORK | Parallel Industries 220</title>
+
+  <meta
+    name="description"
+    content="PI220 APP-005 NETWORK — Network administration, monitoring, telemetry and system control."
+  >
+  <meta name="theme-color" content="#080d18">
+  <meta name="application-name" content="APP-005 NETWORK">
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./assets/icon-192.svg">
+  <link rel="stylesheet" href="./css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="./js/config.js"></script>
+  <script defer src="./js/app.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- =====================================================
+         APPLICATION HEADER
+    ====================================================== -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">220</div>
+        <div class="brand-copy">
+          <div class="brand-title">APP-005 NETWORK</div>
+          <div class="brand-subtitle">PARALLEL INDUSTRIES 220</div>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="system-indicator">
+          <span id="system-status-dot" class="status-dot status-unknown"></span>
+          <span id="system-status-text">INITIALIZING</span>
+        </div>
+
+        <button
+          id="refresh-all-button"
+          class="icon-button"
+          type="button"
+          title="Refresh application data"
+          aria-label="Refresh application data"
+        >
+          ↻
+        </button>
+
+        <button
+          id="auth-open-button"
+          class="button button-primary button-small"
+          type="button"
+        >
+          ADMIN LOGIN
+        </button>
+
+        <button
+          id="auth-logout-button"
+          class="button button-danger button-small hidden"
+          type="button"
+        >
+          SIGN OUT
+        </button>
+      </div>
+    </header>
+
+    <!-- =====================================================
+         APPLICATION BODY
+    ====================================================== -->
+    <div class="app-body">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-heading">NETWORK CONTROL</div>
+
+        <nav class="navigation" aria-label="Main navigation">
+
+          <button class="nav-item active" type="button" data-view="dashboard">
+            <span class="nav-icon">⌂</span>
+            <span>Dashboard</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="nodes">
+            <span class="nav-icon">◈</span>
+            <span>Node Manager</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="monitoring">
+            <span class="nav-icon">⌁</span>
+            <span>Monitoring</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="telemetry">
+            <span class="nav-icon">⌇</span>
+            <span>Telemetry</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="events">
+            <span class="nav-icon">⚑</span>
+            <span>Event Manager</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="history">
+            <span class="nav-icon">◷</span>
+            <span>Network History</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="analytics">
+            <span class="nav-icon">▥</span>
+            <span>Analytics</span>
+          </button>
+
+          <div class="sidebar-divider"></div>
+
+          <div class="sidebar-heading">ADMINISTRATION</div>
+
+          <button class="nav-item" type="button" data-view="administration">
+            <span class="nav-icon">♙</span>
+            <span>Administration</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="system">
+            <span class="nav-icon">⚙</span>
+            <span>System Control</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-footer-label">NETWORK BUILD</div>
+          <div id="build-version">BUILD 006.3</div>
+          <div class="sidebar-footer-label">PI220 SYSTEM</div>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+
+        <!-- =================================================
+             DASHBOARD
+        ================================================== -->
+        <section class="view-section active" id="view-dashboard">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">NETWORK OPERATIONS</div>
+              <h1>System Overview</h1>
+              <p class="page-description">
+                Centralized network status and operational overview.
+              </p>
+            </div>
+
+            <div class="page-heading-meta">
+              <span class="meta-label">LAST UPDATE</span>
+              <strong id="dashboard-last-update">NOT AVAILABLE</strong>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+
+            <article class="metric-card">
+              <div class="metric-label">CONNECTED NODES</div>
+              <div class="metric-value" id="metric-connected-nodes">—</div>
+              <div class="metric-note" id="metric-connected-detail">
+                Awaiting telemetry
+              </div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">TOTAL NODES</div>
+              <div class="metric-value" id="metric-total-nodes">—</div>
+              <div class="metric-note">Registered network nodes</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">ACTIVE VISITORS</div>
+              <div class="metric-value" id="metric-visitors">—</div>
+              <div class="metric-note">External analytics source</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">ACTIVE SESSIONS</div>
+              <div class="metric-value" id="metric-sessions">—</div>
+              <div class="metric-note">External analytics source</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">REQUESTS / MIN</div>
+              <div class="metric-value" id="metric-requests">—</div>
+              <div class="metric-note">Traffic telemetry</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">INDEXED PAGES</div>
+              <div class="metric-value" id="metric-indexed-pages">—</div>
+              <div class="metric-note">Indexing telemetry</div>
+            </article>
+
+          </div>
+
+          <div class="content-grid content-grid-two">
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Network Activity</h2>
+                  <p>Incoming and outgoing traffic</p>
+                </div>
+                <span id="traffic-source-status" class="source-status">
+                  NOT CONNECTED
+                </span>
+              </div>
+
+              <div class="chart-container">
+                <canvas
+                  id="traffic-chart"
+                  aria-label="Network traffic chart"
+                  role="img"
+                ></canvas>
+                <div id="traffic-chart-empty" class="chart-empty">
+                  Traffic telemetry is not configured.
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Network Health</h2>
+                  <p>Current source connection states</p>
+                </div>
+              </div>
+
+              <div class="health-list">
+                <div class="health-row">
+                  <span>Supabase Backend</span>
+                  <span id="health-supabase" class="source-status">
+                    CHECKING
+                  </span>
+                </div>
+
+                <div class="health-row">
+                  <span>Node Monitoring</span>
+                  <span id="health-monitoring" class="source-status">
+                    UNKNOWN
+                  </span>
+                </div>
+
+                <div class="health-row">
+                  <span>External Telemetry</span>
+                  <span id="health-telemetry" class="source-status">
+                    NOT CONFIGURED
+                  </span>
+                </div>
+
+                <div class="health-row">
+                  <span>Website Analytics</span>
+                  <span id="health-analytics" class="source-status">
+                    VALIDATION PENDING
+                  </span>
+                </div>
+              </div>
+            </article>
+
+          </div>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Network Node Overview</h2>
+                <p>Public operational summary, when supplied by an approved source</p>
+              </div>
+              <button class="button button-secondary button-small" type="button"
+                data-navigate="nodes">
+                OPEN NODE MANAGER
+              </button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>NODE</th>
+                    <th>CATEGORY</th>
+                    <th>STATUS</th>
+                    <th>LAST CHECK</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-node-table">
+                  <tr>
+                    <td colspan="4" class="empty-cell">
+                      No public node summary available.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+        </section>
+
+        <!-- =================================================
+             NODE MANAGER
+        ================================================== -->
+        <section class="view-section" id="view-nodes">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">NETWORK INFRASTRUCTURE</div>
+              <h1>Node Manager</h1>
+              <p class="page-description">
+                Register, inspect, update and manage authorized network nodes.
+              </p>
+            </div>
+
+            <button
+              id="node-add-button"
+              class="button button-primary"
+              type="button"
+              disabled
+            >
+              + REGISTER NODE
+            </button>
+          </div>
+
+          <div id="nodes-admin-lock" class="access-notice">
+            <strong>ADMINISTRATOR ACCESS REQUIRED</strong>
+            <p>
+              Node inventory and management operations are protected.
+              Sign in and complete server-side administrator verification.
+            </p>
+            <button class="button button-primary" type="button"
+              data-open-login>
+              ADMIN LOGIN
+            </button>
+          </div>
+
+          <div id="nodes-admin-content" class="hidden">
+
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Registered Nodes</h2>
+                  <p>Protected inventory supplied by the administration backend.</p>
+                </div>
+
+                <button
+                  id="node-refresh-button"
+                  class="button button-secondary button-small"
+                  type="button"
+                >
+                  REFRESH INVENTORY
+                </button>
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>NODE NAME</th>
+                      <th>NODE KEY</th>
+                      <th>CATEGORY</th>
+                      <th>CONNECTION</th>
+                      <th>ENDPOINT / HOST</th>
+                      <th>STATUS</th>
+                      <th>LAST CHECK</th>
+                      <th>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="node-table-body">
+                    <tr>
+                      <td colspan="6" class="empty-cell">
+                        Inventory not loaded.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Node Details</h2>
+                  <p>Select a registered node to inspect its information.</p>
+                </div>
+              </div>
+
+              <div id="node-details" class="detail-placeholder">
+                No node selected.
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- =================================================
+             MONITORING
+        ================================================== -->
+        <section class="view-section" id="view-monitoring">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">OPERATIONAL CONTROL</div>
+              <h1>Monitoring</h1>
+              <p class="page-description">
+                Availability checks and response performance.
+              </p>
+            </div>
+          </div>
+
+          <div id="monitoring-admin-lock" class="access-notice">
+            <strong>ADMINISTRATOR ACCESS REQUIRED</strong>
+            <p>
+              Active node checks and protected monitoring records
+              require administrator verification.
+            </p>
+            <button class="button button-primary" type="button"
+              data-open-login>
+              ADMIN LOGIN
+            </button>
+          </div>
+
+          <div id="monitoring-admin-content" class="hidden">
+
+            <div class="metric-grid metric-grid-three">
+              <article class="metric-card">
+                <div class="metric-label">MONITORED NODE</div>
+                <div class="metric-value metric-value-small" id="monitor-node-name">
+                  PI220 WEBSITE
+                </div>
+              </article>
+
+              <article class="metric-card">
+                <div class="metric-label">LAST RESPONSE</div>
+                <div class="metric-value" id="monitor-response-time">—</div>
+                <div class="metric-note">Milliseconds</div>
+              </article>
+
+              <article class="metric-card">
+                <div class="metric-label">LAST STATUS</div>
+                <div class="metric-value metric-value-small" id="monitor-last-status">
+                  UNKNOWN
+                </div>
+              </article>
+            </div>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Website Node Check</h2>
+                  <p>Authenticated monitoring of the approved PI220 website endpoint.</p>
+                </div>
+
+                <button
+                  id="check-node-button"
+                  class="button button-primary"
+                  type="button"
+                >
+                  CHECK NODE
+                </button>
+              </div>
+
+              <div id="monitor-check-result" class="result-area">
+                No monitoring operation performed in this session.
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Monitoring History</h2>
+                  <p>Historical checks retrieved from the protected database.</p>
+                </div>
+
+                <button
+                  id="refresh-history-button"
+                  class="button button-secondary button-small"
+                  type="button"
+                >
+                  REFRESH HISTORY
+                </button>
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>TIME</th>
+                      <th>NODE</th>
+                      <th>STATUS</th>
+                      <th>HTTP CODE</th>
+                      <th>RESPONSE</th>
+                      <th>DETAIL</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monitor-history-body">
+                    <tr>
+                      <td colspan="6" class="empty-cell">
+                        Protected history not loaded.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+          </div>
+
+        </section>
+
+        <!-- =================================================
+             TELEMETRY
+        ================================================== -->
+        <section class="view-section" id="view-telemetry">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">DATA ACQUISITION</div>
+              <h1>Telemetry</h1>
+              <p class="page-description">
+                External telemetry source configuration and connection status.
+              </p>
+            </div>
+          </div>
+
+          <div class="notice notice-warning">
+            <strong>EXTERNAL TELEMETRY NOT CONFIGURED</strong>
+            <p>
+              No external telemetry endpoint is currently supplied.
+              Measurements will remain unavailable until a valid source is connected.
+            </p>
+          </div>
+
+          <div class="metric-grid metric-grid-three">
+            <article class="metric-card">
+              <div class="metric-label">INCOMING DATA</div>
+              <div class="metric-value" id="telemetry-incoming">—</div>
+              <div class="metric-note">Bytes per second</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">OUTGOING DATA</div>
+              <div class="metric-value" id="telemetry-outgoing">—</div>
+              <div class="metric-note">Bytes per second</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">CRAWL STATUS</div>
+              <div class="metric-value metric-value-small" id="telemetry-crawl-status">
+                UNKNOWN
+              </div>
+            </article>
+          </div>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Telemetry Sources</h2>
+                <p>Connection state and last successful data receipt.</p>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>SOURCE</th>
+                    <th>ENDPOINT</th>
+                    <th>STATUS</th>
+                    <th>LAST RECEIVED</th>
+                  </tr>
+                </thead>
+                <tbody id="telemetry-source-body">
+                  <tr>
+                    <td colspan="4" class="empty-cell">
+                      Telemetry endpoints are not configured.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+        </section>
+
+        <!-- =================================================
+             EVENT MANAGER
+        ================================================== -->
+        <section class="view-section" id="view-events">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">EVENT INTELLIGENCE</div>
+              <h1>Event Manager</h1>
+              <p class="page-description">
+                Operational events, warnings and critical notifications.
+              </p>
+            </div>
+          </div>
+
+          <div class="notice notice-info">
+            <strong>EVENT SOURCE STATUS</strong>
+            <p>
+              This interface distinguishes locally generated application
+              messages from persistent backend audit records.
+              Local messages are not presented as database audit history.
+            </p>
+          </div>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Application Events</h2>
+                <p>Events generated during the current application session.</p>
+              </div>
+
+              <button
+                id="clear-local-events-button"
+                class="button button-secondary button-small"
+                type="button"
+              >
+                CLEAR LOCAL EVENTS
+              </button>
+            </div>
+
+            <div id="event-list" class="event-list">
+              <div class="empty-cell">
+                No application events recorded.
+              </div>
+            </div>
+          </article>
+
+        </section>
+
+        <!-- =================================================
+             NETWORK HISTORY
+        ================================================== -->
+        <section class="view-section" id="view-history">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">RECORDS & PERFORMANCE</div>
+              <h1>Network History</h1>
+              <p class="page-description">
+                Historical monitoring records and network activity.
+              </p>
+            </div>
+          </div>
+
+          <div id="history-admin-lock" class="access-notice">
+            <strong>ADMINISTRATOR ACCESS REQUIRED</strong>
+            <p>
+              Protected monitoring history is available only after
+              successful server-side administrator verification.
+            </p>
+            <button class="button button-primary" type="button"
+              data-open-login>
+              ADMIN LOGIN
+            </button>
+          </div>
+
+          <div id="history-admin-content" class="hidden">
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>PI220 Website Monitoring Records</h2>
+                  <p>Protected history retrieved from the Supabase backend.</p>
+                </div>
+
+                <button
+                  id="history-refresh-button"
+                  class="button button-secondary button-small"
+                  type="button"
+                >
+                  REFRESH
+                </button>
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>DATE / TIME</th>
+                      <th>STATUS</th>
+                      <th>HTTP</th>
+                      <th>RESPONSE</th>
+                      <th>ERROR</th>
+                    </tr>
+                  </thead>
+                  <tbody id="network-history-body">
+                    <tr>
+                      <td colspan="5" class="empty-cell">
+                        Protected records not loaded.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+
+        </section>
+
+        <!-- =================================================
+             ANALYTICS
+        ================================================== -->
+        <section class="view-section" id="view-analytics">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">WEBSITE INTELLIGENCE</div>
+              <h1>Analytics</h1>
+              <p class="page-description">
+                Website activity and analytics integration status.
+              </p>
+            </div>
+          </div>
+
+          <div class="notice notice-warning">
+            <strong>GA4 REPORTING VALIDATION PENDING</strong>
+            <p>
+              The PI220 website measurement identifier is known.
+              This does not establish that APP-005 has access to GA4 reports.
+              Reporting requires a separately authorized data connection.
+            </p>
+          </div>
+
+          <div class="metric-grid metric-grid-three">
+            <article class="metric-card">
+              <div class="metric-label">MEASUREMENT ID</div>
+              <div class="metric-value metric-value-small" id="analytics-measurement-id">
+                G-S1S7HJCFWV
+              </div>
+              <div class="metric-note">PI220 website property</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">REPORTING CONNECTION</div>
+              <div class="metric-value metric-value-small" id="analytics-connection-status">
+                NOT VALIDATED
+              </div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">LAST REPORT</div>
+              <div class="metric-value metric-value-small" id="analytics-last-report">
+                —
+              </div>
+            </article>
+          </div>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Analytics Integration</h2>
+                <p>Connection requirements and current integration state.</p>
+              </div>
+            </div>
+
+            <div class="integration-details">
+              <div class="integration-row">
+                <span>Website measurement</span>
+                <strong id="analytics-tag-status">EXISTING WEBSITE TAG — VALIDATION PENDING</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Consent management</span>
+                <strong>WEBSITE CONFIGURATION</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>APP-005 reporting API</span>
+                <strong>NOT CONNECTED</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Authenticated report access</span>
+                <strong>NOT CONFIGURED</strong>
+              </div>
+            </div>
+          </article>
+
+        </section>
+
+        <!-- =================================================
+             ADMINISTRATION
+        ================================================== -->
+        <section class="view-section" id="view-administration">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">ACCESS CONTROL</div>
+              <h1>Administration</h1>
+              <p class="page-description">
+                Administrator identity, authentication and protected access.
+              </p>
+            </div>
+          </div>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Administrator Session</h2>
+                <p>Access is determined by the Supabase backend.</p>
+              </div>
+            </div>
+
+            <div class="integration-details">
+              <div class="integration-row">
+                <span>Authentication</span>
+                <strong id="admin-auth-status">SIGNED OUT</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Server-side verification</span>
+                <strong id="admin-verification-status">NOT VERIFIED</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Administrator identity</span>
+                <strong id="admin-identity">NOT AVAILABLE</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Protected operations</span>
+                <strong id="admin-protected-status">LOCKED</strong>
+              </div>
+            </div>
+
+            <div class="panel-actions">
+              <button
+                id="admin-login-action"
+                class="button button-primary"
+                type="button"
+              >
+                SIGN IN
+              </button>
+
+              <button
+                id="admin-logout-action"
+                class="button button-danger hidden"
+                type="button"
+              >
+                SIGN OUT
+              </button>
+            </div>
+          </article>
+
+          <div class="notice notice-info">
+            <strong>SECURITY ARCHITECTURE</strong>
+            <p>
+              Browser authentication is not sufficient by itself.
+              Protected operations must be authorized by the backend.
+              Administrative records must never be exposed through public telemetry.
+            </p>
+          </div>
+
+        </section>
+
+        <!-- =================================================
+             SYSTEM CONTROL
+        ================================================== -->
+        <section class="view-section" id="view-system">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">SYSTEM CONFIGURATION</div>
+              <h1>System Control</h1>
+              <p class="page-description">
+                Application configuration and integration health.
+              </p>
+            </div>
+          </div>
+
+          <div class="metric-grid metric-grid-three">
+            <article class="metric-card">
+              <div class="metric-label">APPLICATION</div>
+              <div class="metric-value metric-value-small">APP-005</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">BUILD</div>
+              <div class="metric-value metric-value-small" id="system-build-value">
+                006.3
+              </div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-label">REFRESH INTERVAL</div>
+              <div class="metric-value metric-value-small" id="system-refresh-value">
+                —
+              </div>
+            </article>
+          </div>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Integration Status</h2>
+                <p>Configured application services and dependencies.</p>
+              </div>
+            </div>
+
+            <div class="integration-details">
+
+              <div class="integration-row">
+                <span>Supabase project</span>
+                <strong id="system-supabase-status">CHECKING</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Administrator verification</span>
+                <strong id="system-admin-status">NOT VERIFIED</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Node manager function</span>
+                <strong id="system-node-manager-status">CONFIGURED</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Node monitor function</span>
+                <strong id="system-node-monitor-status">CONFIGURED</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>External telemetry</span>
+                <strong id="system-telemetry-status">NOT CONFIGURED</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>GA4 report connection</span>
+                <strong id="system-ga4-status">NOT CONFIGURED</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Service worker</span>
+                <strong id="system-sw-status">NOT CHECKED</strong>
+              </div>
+
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Application Information</h2>
+                <p>Runtime and installation details.</p>
+              </div>
+            </div>
+
+            <div class="integration-details">
+              <div class="integration-row">
+                <span>Application URL</span>
+                <strong id="system-app-url">—</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Browser environment</span>
+                <strong id="system-browser">—</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Secure context</span>
+                <strong id="system-secure-context">—</strong>
+              </div>
+
+              <div class="integration-row">
+                <span>Last application refresh</span>
+                <strong id="system-last-refresh">—</strong>
+              </div>
+            </div>
+          </article>
+
+        </section>
+
+        <!-- =================================================
+             GLOBAL MESSAGE AREA
+        ================================================== -->
+        <div
+          id="app-message"
+          class="app-message hidden"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+      </main>
+    </div>
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+    <footer class="app-footer">
+      <div class="footer-brand">
+        PARALLEL INDUSTRIES 220
+      </div>
+
+      <div class="footer-mission">
+        MISSION • UNITY • FUTURE • UNSTOPPABLE
+      </div>
+
+      <div class="footer-version">
+        APP-005 NETWORK · BUILD 006.3
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- =======================================================
+       ADMINISTRATOR LOGIN MODAL
+  ======================================================== -->
+  <div
+    id="login-modal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="login-modal-title"
+    aria-hidden="true"
+  >
+    <div class="modal-backdrop" data-close-login></div>
+
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="eyebrow">SECURE ACCESS</div>
+          <h2 id="login-modal-title">Administrator Login</h2>
+        </div>
+
+        <button
+          id="login-close-button"
+          class="icon-button"
+          type="button"
+          aria-label="Close login"
+          data-close-login
+        >
+          ×
+        </button>
+      </div>
+
+      <form id="admin-login-form" autocomplete="on">
+
+        <label for="admin-email">EMAIL ADDRESS</label>
+        <input
+          id="admin-email"
+          name="email"
+          type="email"
+          autocomplete="username"
+          placeholder="Administrator email"
+          required
+        >
+
+        <label for="admin-password">PASSWORD</label>
+        <input
+          id="admin-password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Password"
+          required
+        >
+
+        <div id="login-error" class="form-error hidden" role="alert"></div>
+
+        <button
+          id="admin-login-submit"
+          class="button button-primary button-block"
+          type="submit"
+        >
+          VERIFY ADMINISTRATOR
+        </button>
+
+      </form>
+
+      <div class="modal-security-note">
+        Authentication and administrator authorization are verified
+        by the Supabase backend.
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       NODE EDITOR MODAL
+  ======================================================== -->
+  <div
+    id="node-modal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="node-modal-title"
+    aria-hidden="true"
+  >
+    <div class="modal-backdrop" data-close-node-modal></div>
+
+    <div class="modal-card modal-card-wide">
+
+      <div class="modal-header">
+        <div>
+          <div class="eyebrow">NETWORK INFRASTRUCTURE</div>
+          <h2 id="node-modal-title">Register Node</h2>
+        </div>
+
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="Close node editor"
+          data-close-node-modal
+        >
+          ×
+        </button>
+      </div>
+
+      <form id="node-form">
+
+        <input id="node-id" name="id" type="hidden">
+
+        <div class="form-grid">
+
+          <div class="form-field">
+            <label for="node-name">NODE NAME</label>
+            <input
+              id="node-name"
+              name="name"
+              type="text"
+              maxlength="120"
+              required
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="node-key">NODE KEY</label>
+            <input
+              id="node-key"
+              name="node_key"
+              type="text"
+              minlength="3"
+              maxlength="64"
+              pattern="[A-Za-z0-9_-]{3,64}"
+              required
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="node-category">CATEGORY</label>
+            <select id="node-category" name="category" required>
+              <option value="website">Website</option>
+              <option value="api">API</option>
+              <option value="server">Server</option>
+              <option value="ip_device">IP Device</option>
+              <option value="ftp">FTP</option>
+              <option value="sftp">SFTP</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="node-connection-type">CONNECTION TYPE</label>
+            <select id="node-connection-type" name="connection_type" required>
+              <option value="https">HTTPS</option>
+              <option value="tcp">TCP</option>
+              <option value="agent">Agent</option>
+              <option value="ftp">FTP</option>
+              <option value="sftp">SFTP</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-field form-field-full">
+            <label for="node-endpoint">ENDPOINT URL</label>
+            <input
+              id="node-endpoint"
+              name="endpoint_url"
+              type="url"
+              maxlength="2048"
+              placeholder="https://example.com"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="node-host">HOST</label>
+            <input
+              id="node-host"
+              name="host"
+              type="text"
+              maxlength="255"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="node-port">PORT</label>
+            <input
+              id="node-port"
+              name="port"
+              type="number"
+              min="1"
+              max="65535"
+            >
+          </div>
+
+          <div class="form-field form-field-full">
+            <label for="node-description">PUBLIC DESCRIPTION</label>
+            <textarea
+              id="node-description"
+              name="public_description"
+              rows="3"
+              maxlength="1000"
+            ></textarea>
+          </div>
+
+          <div class="form-field form-field-full checkbox-field">
+            <label>
+              <input
+                id="node-is-public"
+                name="is_public"
+                type="checkbox"
+              >
+              Allow approved public node summary
+            </label>
+          </div>
+
+        </div>
+
+        <div id="node-form-error" class="form-error hidden" role="alert"></div>
+
+        <div class="modal-actions">
+          <button
+            class="button button-secondary"
+            type="button"
+            data-close-node-modal
+          >
+            CANCEL
+          </button>
+
+          <button
+            id="node-save-button"
+            class="button button-primary"
+            type="submit"
+          >
+            SAVE NODE
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+</body>
+</html>
