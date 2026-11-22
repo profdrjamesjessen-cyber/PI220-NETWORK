@@ -1,103 +1,96 @@
 
 /*
+ * ============================================================
  * PI220 — APP-005 NETWORK
  * MODULE: SENTIENT-001
  * FILE: js/sentient.js
- * BUILD: 002
+ * BUILD: 003 — ISOLATED RECOVERY VERSION
+ * ============================================================
  *
  * PROVIDER: GROQ
  * MODEL: openai/gpt-oss-120b
  *
- * BUILD 002 CORRECTIONS:
- * - Accepts the approved APP-005 bridge contract:
- *   { client, userId }
- * - Does not require an additional isAdmin property.
- * - Uses sentient-prompt as the primary input ID.
- * - Supports sentient-input as a compatibility fallback.
- * - Handles administrator access changes.
- * - Waits for the APP-005 bridge to become available.
- * - Prevents duplicate initialization and task submission.
+ * DESIGN:
+ * - Isolated frontend module.
+ * - No changes to APP-005 core state.
+ * - No changes to APP-005 navigation.
+ * - No global polling.
+ * - No direct authentication manipulation.
+ * - No service-role or provider secrets.
  *
- * SECURITY:
- * - APP-005 remains the authority for administrator access.
- * - No service-role key is exposed.
- * - No Groq API key is exposed.
- * - All task operations use authenticated Supabase RPCs.
- * - User and model content is inserted using textContent.
+ * DEPENDENCY:
+ * window.PI220_SENTIENT_BRIDGE.getAccess()
  *
- * PERSISTENCE:
- * - Conversation display is browser-session memory only.
- * - Task and response records are retrieved through APP-005 RPCs.
+ * Approved bridge contract:
+ * {
+ *   client: authenticatedSupabaseClient,
+ *   userId: verifiedAdministratorUserId
+ * }
+ *
+ * The bridge must only return access after APP-005 has
+ * completed its existing backend administrator verification.
+ *
+ * RPC:
+ * app005_sentient_submit_task
+ * app005_sentient_get_task
+ * ============================================================
  */
 
 (() => {
   "use strict";
 
-  if (window.PI220_SENTIENT?.build === "002") {
+  const BUILD = "003";
+
+  /*
+   * Prevent duplicate module registration.
+   * Do not overwrite an existing module.
+   */
+
+  if (window.PI220_SENTIENT?.build === BUILD) {
     return;
   }
 
-  const CONFIG = window.PI220_NETWORK_CONFIG;
-
   const SETTINGS = Object.freeze({
-    build: "002",
-    nodeKey: "sentient-001",
     provider: "groq",
     model: "openai/gpt-oss-120b",
-    pollIntervalMs: 2500,
-    taskTimeoutMs: 600000,
-    maximumPromptLength: 12000,
-    maximumResponseLength: 32000,
-    bridgeRetryMs: 500
-  });
 
-  const TASK_STATUS = Object.freeze({
-    PENDING: "pending",
-    CLAIMED: "claimed",
-    COMPLETED: "completed",
-    FAILED: "failed"
+    submitRpc: "app005_sentient_submit_task",
+    getRpc: "app005_sentient_get_task",
+
+    pollInterval: 2500,
+    timeout: 600000,
+
+    maxPromptLength: 12000,
+    maxResponseLength: 32000
   });
 
   const state = {
     initialized: false,
-    eventsInitialized: false,
     active: false,
     taskId: null,
-    startedAt: 0,
     pollTimer: null,
     timeoutTimer: null,
-    bridgeTimer: null,
-    messages: [],
+    root: null,
     elements: null,
-    accessReady: false
+    messages: []
   };
 
-  /* -------------------------------------------------------
-     01. APP-005 ACCESS BRIDGE
-  ------------------------------------------------------- */
-
-  function getBridge() {
-    return window.PI220_SENTIENT_BRIDGE || null;
-  }
+  /* =========================================================
+     01. SAFE ACCESS
+  ========================================================= */
 
   function getAccess() {
-    const bridge = getBridge();
-
-    if (!bridge || typeof bridge.getAccess !== "function") {
-      return null;
-    }
-
     try {
-      const access = bridge.getAccess();
+      const bridge = window.PI220_SENTIENT_BRIDGE;
 
-      /*
-       * The bridge itself is the administrator verification
-       * boundary. It returns an access object only when the
-       * APP-005 administrator session is verified.
-       *
-       * Approved contract:
-       * { client, userId }
-       */
+      if (
+        !bridge ||
+        typeof bridge.getAccess !== "function"
+      ) {
+        return null;
+      }
+
+      const access = bridge.getAccess();
 
       if (
         !access ||
@@ -113,7 +106,7 @@
 
     } catch (error) {
       console.error(
-        "[SENTIENT-001] Administrator bridge error:",
+        "[SENTIENT-001] Access bridge unavailable:",
         error
       );
 
@@ -125,105 +118,96 @@
     return Boolean(getAccess());
   }
 
-  /* -------------------------------------------------------
-     02. CONFIGURATION
-  ------------------------------------------------------- */
+  /* =========================================================
+     02. DOM DISCOVERY
+  ========================================================= */
 
-  function getRpcNames() {
-    const rpc = CONFIG?.supabase?.rpc || {};
-
-    return {
-      submit:
-        rpc.sentientSubmitTask ||
-        "app005_sentient_submit_task",
-
-      get:
-        rpc.sentientGetTask ||
-        "app005_sentient_get_task"
-    };
-  }
-
-  /* -------------------------------------------------------
-     03. INTERFACE ELEMENTS
-  ------------------------------------------------------- */
-
-  function firstElement(ids) {
+  function findElement(ids, root = document) {
     for (const id of ids) {
-      const node = document.getElementById(id);
+      const element = root.querySelector("#" + id);
 
-      if (node) return node;
+      if (element) return element;
     }
 
     return null;
   }
 
-  function getElements() {
-    return {
-      root: firstElement([
-        "view-sentient"
-      ]),
+  function discoverInterface() {
+    const root = document.getElementById("view-sentient");
 
-      lock: firstElement([
-        "sentient-admin-lock"
-      ]),
+    if (!root) return null;
 
-      content: firstElement([
-        "sentient-admin-content"
-      ]),
+    const elements = {
+      root,
 
-      chat: firstElement([
-        "sentient-chat"
-      ]),
+      lock: findElement(
+        ["sentient-admin-lock"],
+        root
+      ),
 
-      form: firstElement([
-        "sentient-form"
-      ]),
+      content: findElement(
+        ["sentient-admin-content"],
+        root
+      ),
 
-      input: firstElement([
-        "sentient-prompt",
-        "sentient-input"
-      ]),
+      chat: findElement(
+        ["sentient-chat"],
+        root
+      ),
 
-      submit: firstElement([
-        "sentient-submit"
-      ]),
+      form: findElement(
+        ["sentient-form"],
+        root
+      ),
 
-      status: firstElement([
-        "sentient-status"
-      ]),
+      input: findElement(
+        ["sentient-prompt", "sentient-input"],
+        root
+      ),
 
-      clear: firstElement([
-        "sentient-clear"
-      ])
+      submit: findElement(
+        ["sentient-submit"],
+        root
+      ),
+
+      status: findElement(
+        ["sentient-status"],
+        root
+      ),
+
+      clear: findElement(
+        ["sentient-clear"],
+        root
+      )
     };
+
+    if (
+      !elements.chat ||
+      !elements.form ||
+      !elements.input
+    ) {
+      console.error(
+        "[SENTIENT-001] Required interface elements are missing."
+      );
+
+      return null;
+    }
+
+    return elements;
   }
 
-  function refreshElements() {
-    state.elements = getElements();
-    return state.elements;
-  }
-
-  /* -------------------------------------------------------
-     04. INTERFACE STATE
-  ------------------------------------------------------- */
+  /* =========================================================
+     03. INTERFACE CONTROL
+  ========================================================= */
 
   function setStatus(message, type = "info") {
-    const target = state.elements?.status;
+    if (!state.elements?.status) return;
 
-    if (!target) return;
-
-    target.textContent = String(message);
-    target.dataset.status = type;
+    state.elements.status.textContent = String(message);
+    state.elements.status.dataset.status = type;
   }
 
-  function setVisible(target, visible) {
-    if (!target) return;
-
-    target.classList.toggle("hidden", !visible);
-    target.setAttribute("aria-hidden", String(!visible));
-  }
-
-  function setFormEnabled(enabled) {
+  function setEnabled(enabled) {
     const elements = state.elements;
 
     if (!elements) return;
@@ -237,33 +221,40 @@
     }
   }
 
-  function updateAccessInterface(authorized) {
+  function showAccessState(authorized) {
     const elements = state.elements;
 
     if (!elements) return;
 
-    setVisible(elements.lock, !authorized);
-    setVisible(elements.content, authorized);
-
-    setFormEnabled(authorized && !state.active);
-
-    state.accessReady = authorized;
-
-    if (authorized) {
-      setStatus("TASK CHANNEL READY", "ready");
-    } else {
-      setStatus(
-        "APP-005 ADMINISTRATOR VERIFICATION REQUIRED",
-        "locked"
+    if (elements.lock) {
+      elements.lock.classList.toggle(
+        "hidden",
+        authorized
       );
     }
+
+    if (elements.content) {
+      elements.content.classList.toggle(
+        "hidden",
+        !authorized
+      );
+    }
+
+    setEnabled(authorized && !state.active);
+
+    setStatus(
+      authorized
+        ? "TASK CHANNEL READY"
+        : "ADMINISTRATOR ACCESS REQUIRED",
+      authorized ? "ready" : "locked"
+    );
   }
 
-  /* -------------------------------------------------------
-     05. MESSAGE RENDERING
-  ------------------------------------------------------- */
+  /* =========================================================
+     04. SAFE MESSAGE RENDERING
+  ========================================================= */
 
-  function appendMessage(role, content, metadata = {}) {
+  function addMessage(role, content, metadata = {}) {
     const chat = state.elements?.chat;
 
     if (!chat) return;
@@ -271,37 +262,41 @@
     const article = document.createElement("article");
 
     article.className =
-      `sentient-message sentient-message-${role}`;
+      "sentient-message sentient-message-" + role;
 
-    const label = document.createElement("div");
+    const heading = document.createElement("div");
 
-    label.className = "sentient-message-label";
+    heading.className = "sentient-message-label";
 
-    if (role === "user") {
-      label.textContent = "YOU";
-    } else if (role === "assistant") {
-      label.textContent = "SENTIENT-001";
-    } else {
-      label.textContent = "SYSTEM";
-    }
+    heading.textContent =
+      role === "user"
+        ? "YOU"
+        : role === "assistant"
+          ? "SENTIENT-001"
+          : "SYSTEM";
 
     const body = document.createElement("div");
 
     body.className = "sentient-message-content";
+
+    /*
+     * Never interpret user prompts or model responses as HTML.
+     */
+
     body.textContent = String(content ?? "");
 
-    article.append(label, body);
+    article.append(heading, body);
 
     if (metadata.provider || metadata.model) {
-      const details = document.createElement("div");
+      const info = document.createElement("div");
 
-      details.className = "sentient-message-metadata";
+      info.className = "sentient-message-metadata";
 
-      details.textContent =
+      info.textContent =
         `${metadata.provider || SETTINGS.provider} • ` +
         `${metadata.model || SETTINGS.model}`;
 
-      article.appendChild(details);
+      article.appendChild(info);
     }
 
     const timestamp = document.createElement("time");
@@ -313,6 +308,7 @@
     article.appendChild(timestamp);
 
     chat.appendChild(article);
+
     chat.scrollTop = chat.scrollHeight;
 
     state.messages.push({
@@ -322,13 +318,13 @@
     });
   }
 
-  /* -------------------------------------------------------
-     06. RESPONSE NORMALIZATION
-  ------------------------------------------------------- */
+  /* =========================================================
+     05. RESULT NORMALIZATION
+  ========================================================= */
 
-  function normalizeTaskData(data) {
+  function normalizeTask(data) {
     if (Array.isArray(data)) {
-      return data.length ? data[0] : null;
+      return data[0] || null;
     }
 
     if (data && typeof data === "object") {
@@ -338,7 +334,7 @@
     return null;
   }
 
-  function normalizeSubmitResult(data) {
+  function normalizeTaskId(data) {
     if (typeof data === "string") {
       return data;
     }
@@ -362,16 +358,16 @@
     return null;
   }
 
-  function isValidUuid(value) {
+  function validUuid(value) {
     return (
       typeof value === "string" &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
     );
   }
 
-  /* -------------------------------------------------------
-     07. TASK TIMER MANAGEMENT
-  ------------------------------------------------------- */
+  /* =========================================================
+     06. TIMER CONTROL
+  ========================================================= */
 
   function clearTimers() {
     if (state.pollTimer !== null) {
@@ -390,20 +386,18 @@
 
     state.active = false;
     state.taskId = null;
-    state.startedAt = 0;
 
-    setFormEnabled(hasAccess());
+    setEnabled(hasAccess());
   }
 
-  /* -------------------------------------------------------
-     08. ACCESS REVOCATION
-  ------------------------------------------------------- */
+  /* =========================================================
+     07. ACCESS REVOCATION
+  ========================================================= */
 
   function revokeAccess() {
     finishTask();
 
     state.messages = [];
-    state.accessReady = false;
 
     if (state.elements?.chat) {
       state.elements.chat.replaceChildren();
@@ -413,54 +407,23 @@
       state.elements.input.value = "";
     }
 
-    updateAccessInterface(false);
+    showAccessState(false);
   }
 
-  function clearConversation() {
-    if (!hasAccess()) {
-      revokeAccess();
-      return;
-    }
+  /* =========================================================
+     08. TASK SUBMISSION
+  ========================================================= */
 
-    /*
-     * Do not cancel a task on the server when clearing the
-     * local conversation display.
-     */
+  async function submit(prompt) {
     if (state.active) {
-      setStatus(
-        "TASK RUNNING — CLEARING IS DISABLED",
-        "warning"
-      );
+      setStatus("TASK ALREADY RUNNING", "warning");
       return;
     }
 
-    state.messages = [];
-
-    if (state.elements?.chat) {
-      state.elements.chat.replaceChildren();
-    }
-
-    if (state.elements?.input) {
-      state.elements.input.value = "";
-    }
-
-    setStatus("TASK CHANNEL READY", "ready");
-  }
-
-  /* -------------------------------------------------------
-     09. TASK SUBMISSION
-  ------------------------------------------------------- */
-
-  async function submitTask(prompt) {
     const access = getAccess();
 
     if (!access) {
       revokeAccess();
-      return;
-    }
-
-    if (state.active) {
-      setStatus("A TASK IS ALREADY RUNNING", "warning");
       return;
     }
 
@@ -471,48 +434,41 @@
       return;
     }
 
-    if (cleanPrompt.length > SETTINGS.maximumPromptLength) {
+    if (cleanPrompt.length > SETTINGS.maxPromptLength) {
       setStatus(
-        `MESSAGE LIMIT: ${SETTINGS.maximumPromptLength} CHARACTERS`,
+        "PROMPT LIMIT: " + SETTINGS.maxPromptLength,
         "warning"
       );
       return;
     }
 
-    const rpcNames = getRpcNames();
-
     state.active = true;
-    state.startedAt = Date.now();
 
-    setFormEnabled(false);
+    setEnabled(false);
 
-    appendMessage("user", cleanPrompt);
+    addMessage("user", cleanPrompt);
 
     setStatus("SUBMITTING TASK", "working");
 
     try {
       const { data, error } = await access.client.rpc(
-        rpcNames.submit,
+        SETTINGS.submitRpc,
         {
           p_prompt: cleanPrompt
         }
       );
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (!hasAccess()) {
         revokeAccess();
         return;
       }
 
-      const taskId = normalizeSubmitResult(data);
+      const taskId = normalizeTaskId(data);
 
-      if (!isValidUuid(taskId)) {
-        throw new Error(
-          "The server did not return a valid task identifier."
-        );
+      if (!validUuid(taskId)) {
+        throw new Error("Invalid task identifier returned.");
       }
 
       state.taskId = taskId;
@@ -525,41 +481,42 @@
       state.timeoutTimer = setTimeout(() => {
         if (!state.active) return;
 
-        appendMessage(
+        addMessage(
           "system",
-          "Task waiting period expired. The task may still exist on the backend. Check the node runtime and task status."
+          "Task waiting period expired. Check the node runtime and backend task status."
         );
 
-        setStatus("TASK TIMEOUT — CHECK NODE RUNTIME", "warning");
+        setStatus("TASK TIMEOUT", "warning");
 
         finishTask();
 
-      }, SETTINGS.taskTimeoutMs);
+      }, SETTINGS.timeout);
 
-      await pollTask();
+      await poll();
 
     } catch (error) {
       console.error(
-        "[SENTIENT-001] Task submission failed:",
+        "[SENTIENT-001] Submission error:",
         error
       );
 
-      appendMessage(
+      addMessage(
         "system",
-        `TASK SUBMISSION FAILED: ${error?.message || "Unknown error"}`
+        "SUBMISSION FAILED: " +
+          (error?.message || "Unknown error")
       );
 
-      setStatus("TASK SUBMISSION FAILED", "error");
+      setStatus("SUBMISSION FAILED", "error");
 
       finishTask();
     }
   }
 
-  /* -------------------------------------------------------
-     10. TASK STATUS POLLING
-  ------------------------------------------------------- */
+  /* =========================================================
+     09. TASK POLLING
+  ========================================================= */
 
-  async function pollTask() {
+  async function poll() {
     if (!state.active || !state.taskId) return;
 
     const access = getAccess();
@@ -569,119 +526,104 @@
       return;
     }
 
-    const rpcNames = getRpcNames();
-    const taskId = state.taskId;
-
     try {
       const { data, error } = await access.client.rpc(
-        rpcNames.get,
+        SETTINGS.getRpc,
         {
-          p_task_id: taskId
+          p_task_id: state.taskId
         }
       );
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (!hasAccess()) {
         revokeAccess();
         return;
       }
 
-      const task = normalizeTaskData(data);
+      const task = normalizeTask(data);
 
       if (!task) {
-        throw new Error(
-          "The server returned no task information."
-        );
+        throw new Error("Task information unavailable.");
       }
 
-      if (task.status === TASK_STATUS.PENDING) {
-        setStatus("TASK QUEUED — WAITING FOR NODE", "working");
-        schedulePoll();
-        return;
-      }
+      switch (task.status) {
 
-      if (task.status === TASK_STATUS.CLAIMED) {
-        setStatus("SENTIENT-001 IS PROCESSING", "working");
-        schedulePoll();
-        return;
-      }
+        case "pending":
+          setStatus("TASK QUEUED", "working");
+          schedulePoll();
+          return;
 
-      if (task.status === TASK_STATUS.COMPLETED) {
-        const response = String(task.response ?? "").trim();
+        case "claimed":
+          setStatus("SENTIENT-001 PROCESSING", "working");
+          schedulePoll();
+          return;
 
-        if (!response) {
-          throw new Error(
-            "The completed task returned an empty response."
-          );
+        case "completed": {
+          const response = String(
+            task.response ?? ""
+          ).trim();
+
+          if (!response) {
+            throw new Error("Empty task response.");
+          }
+
+          if (response.length > SETTINGS.maxResponseLength) {
+            throw new Error("Response exceeds configured limit.");
+          }
+
+          addMessage("assistant", response, {
+            provider: task.provider,
+            model: task.model
+          });
+
+          if (
+            task.provider !== SETTINGS.provider ||
+            task.model !== SETTINGS.model
+          ) {
+            setStatus(
+              "RESPONSE RECEIVED — PROVIDER CHECK REQUIRED",
+              "warning"
+            );
+          } else {
+            setStatus("RESPONSE RECEIVED", "ready");
+          }
+
+          finishTask();
+          return;
         }
 
-        if (response.length > SETTINGS.maximumResponseLength) {
-          throw new Error(
-            "The response exceeds the configured maximum length."
-          );
-        }
-
-        appendMessage("assistant", response, {
-          provider: task.provider,
-          model: task.model
-        });
-
-        const providerMatches =
-          task.provider === SETTINGS.provider;
-
-        const modelMatches =
-          task.model === SETTINGS.model;
-
-        if (!providerMatches || !modelMatches) {
-          appendMessage(
+        case "failed":
+          addMessage(
             "system",
-            "Provider/model verification warning: the returned inference identity differs from the configured target."
+            "TASK FAILED: " +
+              (task.last_error || "No failure details available.")
           );
 
-          setStatus(
-            "RESPONSE RECEIVED — PROVIDER/MODEL MISMATCH",
-            "warning"
+          setStatus("TASK FAILED", "error");
+
+          finishTask();
+          return;
+
+        default:
+          throw new Error(
+            "Unknown task status: " + String(task.status)
           );
-
-        } else {
-          setStatus("RESPONSE RECEIVED", "ready");
-        }
-
-        finishTask();
-        return;
       }
-
-      if (task.status === TASK_STATUS.FAILED) {
-        appendMessage(
-          "system",
-          `TASK FAILED: ${task.last_error || "No failure reason was returned."}`
-        );
-
-        setStatus("TASK FAILED", "error");
-
-        finishTask();
-        return;
-      }
-
-      throw new Error(
-        `Unexpected task status: ${String(task.status)}`
-      );
 
     } catch (error) {
       console.error(
-        "[SENTIENT-001] Task polling failed:",
+        "[SENTIENT-001] Polling error:",
         error
       );
 
-      appendMessage(
+      addMessage(
         "system",
-        `TASK STATUS CHECK FAILED: ${error?.message || "Unknown error"}`
+        "TASK CHECK FAILED: " +
+          (error?.message || "Unknown error")
       );
 
-      setStatus("TASK STATUS CHECK FAILED", "error");
+      setStatus("TASK CHECK FAILED", "error");
 
       finishTask();
     }
@@ -694,13 +636,13 @@
 
     state.pollTimer = setTimeout(() => {
       state.pollTimer = null;
-      pollTask();
-    }, SETTINGS.pollIntervalMs);
+      poll();
+    }, SETTINGS.pollInterval);
   }
 
-  /* -------------------------------------------------------
-     11. FORM EVENTS
-  ------------------------------------------------------- */
+  /* =========================================================
+     10. LOCAL INTERFACE EVENTS
+  ========================================================= */
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -712,222 +654,145 @@
 
     const input = state.elements?.input;
 
-    if (!input) {
-      setStatus("PROMPT INPUT ELEMENT NOT FOUND", "error");
-      return;
-    }
+    if (!input) return;
 
     const prompt = input.value;
 
     input.value = "";
 
-    submitTask(prompt);
+    submit(prompt);
+  }
+
+  function handleClear() {
+    if (!hasAccess()) {
+      revokeAccess();
+      return;
+    }
+
+    if (state.active) {
+      setStatus(
+        "CANNOT CLEAR WHILE TASK IS RUNNING",
+        "warning"
+      );
+
+      return;
+    }
+
+    state.messages = [];
+
+    state.elements.chat.replaceChildren();
+
+    setStatus("TASK CHANNEL READY", "ready");
   }
 
   function initializeEvents() {
-    if (state.eventsInitialized) return;
-
     const elements = state.elements;
 
-    if (elements.form) {
-      elements.form.addEventListener(
-        "submit",
-        handleSubmit
-      );
-    }
+    elements.form.addEventListener(
+      "submit",
+      handleSubmit
+    );
 
     if (elements.clear) {
       elements.clear.addEventListener(
         "click",
-        clearConversation
+        handleClear
       );
     }
 
     /*
-     * APP-005 dispatches this event when administrator
-     * verification changes.
+     * Listen only for APP-005 administrator access changes.
+     * No APP-005 state is modified.
      */
+
     window.addEventListener(
       "pi220:admin-access",
-      event => {
-        const detail = event?.detail;
-
-        const authorized =
-          detail === true ||
-          detail?.isAdmin === true ||
-          Boolean(getAccess());
-
-        if (authorized) {
-          updateAccessInterface(true);
-
-          if (state.elements?.chat && !state.messages.length) {
-            appendMessage(
-              "system",
-              "SENTIENT-001 interface ready. Submit a task to begin."
-            );
-          }
-
+      () => {
+        if (hasAccess()) {
+          showAccessState(true);
         } else {
           revokeAccess();
         }
       }
     );
-
-    window.addEventListener(
-      "pi220:app-ready",
-      () => {
-        refreshElements();
-        initializeEvents();
-
-        if (hasAccess()) {
-          updateAccessInterface(true);
-        } else {
-          updateAccessInterface(false);
-        }
-      }
-    );
-
-    window.addEventListener(
-      "pagehide",
-      clearTimers
-    );
-
-    state.eventsInitialized = true;
   }
 
-  /* -------------------------------------------------------
-     12. INITIALIZATION
-  ------------------------------------------------------- */
+  /* =========================================================
+     11. INITIALIZATION
+  ========================================================= */
 
   function initialize() {
-    if (state.initialized) return;
+    if (state.initialized) return false;
 
-    refreshElements();
+    /*
+     * If the SENTIENT section is absent, exit quietly.
+     * APP-005 continues normally.
+     */
 
-    if (!state.elements.root) {
-      console.warn(
-        "[SENTIENT-001] view-sentient was not found. Initialization postponed."
-      );
-      return;
+    const elements = discoverInterface();
+
+    if (!elements) {
+      return false;
     }
 
-    if (!state.elements.chat || !state.elements.form) {
-      console.error(
-        "[SENTIENT-001] Required chat/form elements are missing."
-      );
-
-      setStatus(
-        "INTERFACE CONFIGURATION ERROR",
-        "error"
-      );
-
-      return;
-    }
-
-    if (!state.elements.input) {
-      console.error(
-        "[SENTIENT-001] Neither sentient-prompt nor sentient-input exists."
-      );
-
-      setStatus(
-        "PROMPT INPUT ELEMENT NOT FOUND",
-        "error"
-      );
-
-      return;
-    }
-
-    state.initialized = true;
+    state.root = elements.root;
+    state.elements = elements;
 
     initializeEvents();
 
+    state.initialized = true;
+
     if (hasAccess()) {
-      updateAccessInterface(true);
+      showAccessState(true);
 
-      appendMessage(
+      addMessage(
         "system",
-        "SENTIENT-001 BUILD 002 initialized. APP-005 administrator access verified."
-      );
-
-      console.info(
-        "[SENTIENT-001] BUILD 002 initialized with verified access."
+        "SENTIENT-001 BUILD 003 initialized. Administrator access verified by APP-005."
       );
 
     } else {
-      updateAccessInterface(false);
-
-      console.info(
-        "[SENTIENT-001] BUILD 002 initialized in locked state."
-      );
-    }
-  }
-
-  function start() {
-    if (document.readyState === "loading") {
-      document.addEventListener(
-        "DOMContentLoaded",
-        initialize,
-        { once: true }
-      );
-    } else {
-      initialize();
+      showAccessState(false);
     }
 
-    /*
-     * If APP-005 initializes its bridge after this module,
-     * retry briefly without creating duplicate listeners.
-     */
-    state.bridgeTimer = setInterval(() => {
-      if (!state.initialized) {
-        refreshElements();
+    console.info(
+      "[SENTIENT-001] BUILD 003 initialized."
+    );
 
-        if (state.elements.root) {
-          initialize();
-        }
-
-        return;
-      }
-
-      const authorized = hasAccess();
-
-      if (authorized !== state.accessReady) {
-        if (authorized) {
-          updateAccessInterface(true);
-
-          if (!state.messages.length) {
-            appendMessage(
-              "system",
-              "SENTIENT-001 administrator session verified."
-            );
-          }
-        } else {
-          revokeAccess();
-        }
-      }
-
-    }, SETTINGS.bridgeRetryMs);
+    return true;
   }
 
-  /* -------------------------------------------------------
-     13. PUBLIC MODULE INTERFACE
-  ------------------------------------------------------- */
+  /* =========================================================
+     12. SAFE PUBLIC INTERFACE
+  ========================================================= */
 
   window.PI220_SENTIENT = Object.freeze({
-    build: SETTINGS.build,
+    build: BUILD,
+
     initialize,
-    clearConversation,
 
     getStatus() {
       return Object.freeze({
-        build: SETTINGS.build,
+        build: BUILD,
         initialized: state.initialized,
         active: state.active,
-        taskId: state.taskId,
-        accessReady: state.accessReady
+        taskId: state.taskId
       });
-    }
+    },
+
+    revokeAccess
   });
 
-  start();
+  /*
+   * No automatic timers.
+   * No background polling.
+   * No changes to APP-005.
+   *
+   * APP-005 may explicitly call:
+   * window.PI220_SENTIENT.initialize()
+   */
+
+  console.info(
+    "[SENTIENT-001] BUILD 003 module loaded — awaiting explicit initialization."
+  );
 
 })();
