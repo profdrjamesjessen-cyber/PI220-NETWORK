@@ -39,8 +39,19 @@
         },
   
         rpc: {
-          nodeHistory: "app005_get_node_check_history"
-        }
+  nodeHistory: "app005_get_node_check_history",
+  sentientSubmitTask: "app005_sentient_submit_task",
+  sentientGetTask: "app005_sentient_get_task"
+},
+
+sentient: {
+  nodeKey: "sentient-001",
+  provider: "groq",
+  model: "openai/gpt-oss-120b",
+  pollIntervalMs: 2500,
+  taskTimeoutMs: 600000,
+  maximumPromptLength: 12000
+}
       },
   
       /* APPROVED NETWORK NODE */
