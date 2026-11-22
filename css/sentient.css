@@ -1,0 +1,586 @@
+
+/*
+ * ============================================================
+ * PI220 — APP-005 NETWORK
+ * MODULE: SENTIENT-001
+ * FILE: css/sentient.css
+ * BUILD: 002
+ *
+ * PURPOSE:
+ * Dedicated visual layer for SENTIENT-001.
+ *
+ * ISOLATION:
+ * All selectors are scoped to #view-sentient.
+ * No global body, html, button, input or root rules.
+ * No changes to APP-005 layout or shared components.
+ *
+ * DESIGN:
+ * PI220 dark navy interface.
+ * Blue intelligence accents.
+ * Clear task and response separation.
+ * Responsive desktop and mobile layouts.
+ * ============================================================
+ */
+
+/* ============================================================
+   01. SENTIENT VIEW
+============================================================ */
+
+#view-sentient {
+  --sentient-accent: var(--accent, #4ca5ff);
+  --sentient-border: var(--border, #24354d);
+  --sentient-surface: var(--surface, #101b2c);
+  --sentient-raised: var(--surface-raised, #142238);
+  --sentient-text: var(--text, #e9f0fa);
+  --sentient-muted: var(--text-muted, #71839b);
+  --sentient-secondary: var(--text-secondary, #a4b4c9);
+  --sentient-success: var(--success, #39c98a);
+  --sentient-warning: var(--warning, #f2b84b);
+  --sentient-danger: var(--danger, #f06a73);
+
+  width: 100%;
+  min-width: 0;
+  color: var(--sentient-text);
+}
+
+/* ============================================================
+   02. ACCESS CONTROL
+============================================================ */
+
+#view-sentient .sentient-admin-lock {
+  margin-bottom: 18px;
+  padding: 24px;
+  border: 1px solid rgba(242, 184, 75, 0.35);
+  border-radius: var(--radius, 10px);
+  background: rgba(242, 184, 75, 0.08);
+}
+
+#view-sentient .sentient-admin-lock strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--sentient-warning);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.8px;
+}
+
+#view-sentient .sentient-admin-lock p {
+  margin: 0;
+  color: var(--sentient-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#view-sentient .sentient-admin-content {
+  width: 100%;
+  min-width: 0;
+}
+
+/*
+ * Local hidden utility.
+ * Does not modify the global .hidden class.
+ */
+
+#view-sentient .hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   03. NODE IDENTITY
+============================================================ */
+
+#view-sentient .sentient-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 17px 19px;
+  border: 1px solid var(--sentient-border);
+  border-radius: var(--radius, 10px);
+  background: var(--sentient-surface);
+}
+
+#view-sentient .sentient-identity-main {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+#view-sentient .sentient-identity-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(76, 165, 255, 0.5);
+  border-radius: 9px;
+  background: linear-gradient(145deg, #193d65, #0e2038);
+  color: #d8edff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+#view-sentient .sentient-identity-name {
+  color: var(--sentient-text);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.7px;
+}
+
+#view-sentient .sentient-identity-description {
+  margin-top: 4px;
+  color: var(--sentient-muted);
+  font-size: 10px;
+}
+
+#view-sentient .sentient-identity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ============================================================
+   04. STATUS LABELS
+============================================================ */
+
+#view-sentient .sentient-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 6px 10px;
+  border: 1px solid var(--sentient-border);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--sentient-secondary);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.65px;
+}
+
+#view-sentient .sentient-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--sentient-muted);
+}
+
+#view-sentient .sentient-status[data-status="ready"] {
+  border-color: rgba(57, 201, 138, 0.35);
+  color: var(--sentient-success);
+}
+
+#view-sentient .sentient-status[data-status="ready"]::before {
+  background: var(--sentient-success);
+}
+
+#view-sentient .sentient-status[data-status="working"] {
+  border-color: rgba(76, 165, 255, 0.35);
+  color: var(--sentient-accent);
+}
+
+#view-sentient .sentient-status[data-status="working"]::before {
+  background: var(--sentient-accent);
+}
+
+#view-sentient .sentient-status[data-status="warning"] {
+  border-color: rgba(242, 184, 75, 0.35);
+  color: var(--sentient-warning);
+}
+
+#view-sentient .sentient-status[data-status="warning"]::before {
+  background: var(--sentient-warning);
+}
+
+#view-sentient .sentient-status[data-status="error"],
+#view-sentient .sentient-status[data-status="locked"] {
+  border-color: rgba(240, 106, 115, 0.35);
+  color: var(--sentient-danger);
+}
+
+#view-sentient .sentient-status[data-status="error"]::before,
+#view-sentient .sentient-status[data-status="locked"]::before {
+  background: var(--sentient-danger);
+}
+
+/* ============================================================
+   05. CHAT PANEL
+============================================================ */
+
+#view-sentient .sentient-chat-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--sentient-border);
+  border-radius: var(--radius, 10px);
+  background: var(--sentient-surface);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
+}
+
+#view-sentient .sentient-chat-header {
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--sentient-border);
+}
+
+#view-sentient .sentient-chat-heading {
+  color: var(--sentient-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#view-sentient .sentient-chat-subheading {
+  margin-top: 4px;
+  color: var(--sentient-muted);
+  font-size: 10px;
+}
+
+#view-sentient #sentient-chat {
+  width: 100%;
+  height: min(58vh, 620px);
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(
+      ellipse at top,
+      rgba(76, 165, 255, 0.045),
+      transparent 65%
+    ),
+    var(--bg, #080d18);
+  scrollbar-color: var(--sentient-border) transparent;
+  scrollbar-width: thin;
+}
+
+/* ============================================================
+   06. MESSAGE STRUCTURE
+============================================================ */
+
+#view-sentient .sentient-message {
+  width: fit-content;
+  max-width: min(88%, 780px);
+  min-width: 100px;
+  padding: 13px 15px;
+  border: 1px solid var(--sentient-border);
+  border-radius: 9px;
+  background: var(--sentient-raised);
+  overflow-wrap: anywhere;
+  animation: sentient-message-enter 0.18s ease-out;
+}
+
+#view-sentient .sentient-message-user {
+  align-self: flex-end;
+  border-color: rgba(76, 165, 255, 0.3);
+  background: rgba(76, 165, 255, 0.10);
+}
+
+#view-sentient .sentient-message-assistant {
+  align-self: flex-start;
+  border-color: rgba(57, 201, 138, 0.22);
+  background: rgba(16, 27, 44, 0.96);
+}
+
+#view-sentient .sentient-message-system {
+  align-self: center;
+  width: min(92%, 680px);
+  max-width: 92%;
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+#view-sentient .sentient-message-label {
+  margin-bottom: 8px;
+  color: var(--sentient-muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+#view-sentient .sentient-message-user .sentient-message-label {
+  color: var(--sentient-accent);
+}
+
+#view-sentient .sentient-message-assistant .sentient-message-label {
+  color: var(--sentient-success);
+}
+
+#view-sentient .sentient-message-content {
+  color: var(--sentient-text);
+  font-size: 12px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+#view-sentient .sentient-message-system .sentient-message-content {
+  color: var(--sentient-secondary);
+  font-size: 11px;
+}
+
+#view-sentient .sentient-message-metadata {
+  margin-top: 11px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(36, 53, 77, 0.65);
+  color: var(--sentient-muted);
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+#view-sentient .sentient-message-time {
+  display: block;
+  margin-top: 8px;
+  color: var(--sentient-muted);
+  font-size: 9px;
+  text-align: right;
+}
+
+/* ============================================================
+   07. CODE AND LONG RESPONSES
+============================================================ */
+
+#view-sentient .sentient-message-content pre {
+  max-width: 100%;
+  margin: 12px 0;
+  padding: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--sentient-border);
+  border-radius: 6px;
+  background: #080d18;
+  color: #dcecff;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+#view-sentient .sentient-message-content code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.95em;
+}
+
+#view-sentient .sentient-message-content :not(pre) > code {
+  padding: 2px 5px;
+  border: 1px solid var(--sentient-border);
+  border-radius: 4px;
+  background: rgba(8, 13, 24, 0.7);
+}
+
+/* ============================================================
+   08. PROMPT COMPOSER
+============================================================ */
+
+#view-sentient .sentient-composer {
+  padding: 17px;
+  border-top: 1px solid var(--sentient-border);
+  background: var(--sentient-surface);
+}
+
+#view-sentient #sentient-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+#view-sentient #sentient-prompt,
+#view-sentient #sentient-input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  max-height: 180px;
+  padding: 13px 14px;
+  resize: vertical;
+  border: 1px solid var(--sentient-border);
+  border-radius: 7px;
+  outline: none;
+  background: var(--bg, #080d18);
+  color: var(--sentient-text);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+#view-sentient #sentient-prompt::placeholder,
+#view-sentient #sentient-input::placeholder {
+  color: var(--sentient-muted);
+}
+
+#view-sentient #sentient-prompt:focus,
+#view-sentient #sentient-input:focus {
+  border-color: var(--sentient-accent);
+  box-shadow: 0 0 0 3px rgba(76, 165, 255, 0.10);
+}
+
+#view-sentient #sentient-prompt:disabled,
+#view-sentient #sentient-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+#view-sentient #sentient-submit {
+  min-width: 105px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid var(--sentient-accent);
+  border-radius: 7px;
+  background: var(--sentient-accent);
+  color: #061322;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  transition: background 0.15s, transform 0.15s;
+}
+
+#view-sentient #sentient-submit:hover:not(:disabled) {
+  background: var(--accent-hover, #75baff);
+  transform: translateY(-1px);
+}
+
+#view-sentient #sentient-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   09. SECONDARY ACTIONS
+============================================================ */
+
+#view-sentient #sentient-clear {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--sentient-border);
+  border-radius: 5px;
+  background: var(--sentient-raised);
+  color: var(--sentient-secondary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+#view-sentient #sentient-clear:hover {
+  border-color: var(--sentient-accent);
+  color: var(--sentient-accent);
+}
+
+/* ============================================================
+   10. INFORMATION AND FOOTER
+============================================================ */
+
+#view-sentient .sentient-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  color: var(--sentient-muted);
+  font-size: 9px;
+}
+
+#view-sentient .sentient-footer strong {
+  color: var(--sentient-secondary);
+  font-weight: 800;
+}
+
+#view-sentient .sentient-information {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--sentient-border);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--sentient-muted);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+/* ============================================================
+   11. ANIMATION
+============================================================ */
+
+@keyframes sentient-message-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   12. RESPONSIVE LAYOUT
+============================================================ */
+
+@media (max-width: 760px) {
+  #view-sentient .sentient-identity {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #view-sentient #sentient-chat {
+    height: 55vh;
+    min-height: 260px;
+    padding: 13px;
+  }
+
+  #view-sentient .sentient-message {
+    max-width: 95%;
+  }
+
+  #view-sentient #sentient-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #view-sentient #sentient-submit {
+    width: 100%;
+  }
+
+  #view-sentient .sentient-composer {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  #view-sentient .sentient-message {
+    max-width: 100%;
+  }
+
+  #view-sentient .sentient-chat-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #view-sentient .sentient-identity-meta {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   13. ACCESSIBILITY
+============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  #view-sentient .sentient-message {
+    animation: none;
+  }
+}
